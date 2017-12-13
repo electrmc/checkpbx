@@ -1,6 +1,8 @@
 'use strict'
+const consistency = require('./consistency');
 const exec = require('./shell').execshell;
 const setting = require('./setting');
+const logobject = require('./log');
 const stdio = require('stdio');
 const path = require('path');
 
@@ -48,7 +50,18 @@ async function start() {
         await checkDSYM(configList);
         console.log("DSYM检查完毕...");
     }
-    console.log('finish');
+    
+     // 下面是根据项目定制的功能：检查不同target中的文件是否一样 
+    await consistency.checkTargetConsistency(targetInfo,allSourceMap);
+    if (!opts.verbose) {
+        await logobject.deleteIneffectiveLog();
+    };
+    let str = await logobject.content();
+    if(str) {
+        console.log(str);
+    }
+    console.log("对应target资源一致性检查完毕...");
+    console.log('finish');    
 }
 
 async function prepareWork() {
@@ -71,6 +84,7 @@ async function prepareWork() {
     await exec(shStr);
     shStr = `mkdir ${handleTempDir}`;
     await exec(shStr);
+    logobject.clear();
     return entrancePath;
 }
 
